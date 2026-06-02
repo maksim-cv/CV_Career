@@ -1,0 +1,16 @@
+import cv2
+import matplotlib.pyplot as plt
+
+img = cv2.imread("checkerboard") # ориг цветной если он bgr
+grey_1 = cv2.imread("checkerboard", cv2.IMREAD_GRAYSCALE) # ч/б (1 способ)
+grey_2 = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) # ч/б (2 способ)
+img_2 = cv2.imwrite(img) # скачать фото, не знаю зачем это нужно пока что
+print(f'Размеры цветного: {img}')
+print(f'Размеры ч/б: {grey_1}')
+
+plt.imshow("Orig color", img)
+plt.imshow("Orig color written", img_2)
+plt.imshow("Grey_1", grey_1)
+plt.imshow("Grey_2", grey_2)
+plt.show
+

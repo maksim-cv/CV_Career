@@ -12,7 +12,7 @@ cv2.createTrackbar('S Max', 'Trackbars', 255, 255, nothing)
 cv2.createTrackbar('V Min', 'Trackbars', 0, 255, nothing)
 cv2.createTrackbar('V Max', 'Trackbars', 255, 255, nothing)
 
-img = cv2.imread('apples.jpg')
+img = cv2.imread('ball.jpg')
 hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
 while True:

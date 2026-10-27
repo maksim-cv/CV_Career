@@ -13,7 +13,7 @@ def click_event(event, x, y, flags, param):
         cv2.imshow('Image', img)
 
 # Загружаем картинку
-img = cv2.imread('book2.jpg')
+img = cv2.imread('road.png')
 cv2.imshow('Image', img)
 cv2.setMouseCallback('Image', click_event)
 

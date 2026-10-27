@@ -4,16 +4,17 @@ def nothing(x):
     pass
 cv2.namedWindow('trackbar')
 cv2.createTrackbar('H min', 'trackbar', 0, 179, nothing)
-cv2.createTrackbar('H max', 'trackbar', 0, 179, nothing)
+cv2.createTrackbar('H max', 'trackbar', 179, 179, nothing)
 
 cv2.createTrackbar('S min', 'trackbar', 0, 255, nothing)
-cv2.createTrackbar('S max', 'trackbar', 0, 255, nothing)
+cv2.createTrackbar('S max', 'trackbar', 255, 255, nothing)
 
 cv2.createTrackbar('V min', 'trackbar', 0, 255, nothing)
-cv2.createTrackbar('V max', 'trackbar', 0, 255, nothing)
+cv2.createTrackbar('V max', 'trackbar', 255, 255, nothing)
 
 
-img = cv2.imread('fruits.png')
+img = cv2.imread('face_card.jpg')
+img = cv2.resize(img, (int(img.shape[0] // 6), int(img.shape[1] // 6)))
 hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 while True:
     h_min = cv2.getTrackbarPos('H min', 'trackbar')

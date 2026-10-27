@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-img = cv2.imread('detection_robot.png')
+img = cv2.imread('chromakey2.png')
 hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
 def nothing(x):

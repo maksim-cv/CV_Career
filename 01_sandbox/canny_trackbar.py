@@ -1,8 +1,7 @@
 import cv2
 
-img = cv2.imread('detection_robot.png')
+img = cv2.imread('book_vectors.png')
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-result = img.copy()
 # blur = cv2.GaussianBlur(gray, (11, 11), 0)
 def nothing(x):
     pass

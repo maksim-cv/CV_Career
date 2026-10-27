@@ -1,22 +1,56 @@
-import cv2
 import numpy as np
+import cv2
+import glob
 
-img = cv2.imread('detection_robot.png')
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+CHESSBOARD = (9, 6)
+objp = np.zeros((CHESSBOARD[0] * CHESSBOARD[1], 3), dtype=np.float32)
+objp[:, :2] = np.mgrid[0:CHESSBOARD[0], 0:CHESSBOARD[1]].T.reshape(-1, 2)
 
-edges = cv2.Canny(gray, 110, 170)
-# дилатация
-kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-dilated = cv2.dilate(edges, kernel)
-# контуры
-contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+points_2D = []
+points_3D = []
+images = glob.glob('images_chess/*.jpg')
 
-if contours:
-    con = [c for c in contours if cv2.contourArea(c) > 400]
-    con = sorted(con, key=cv2.contourArea, reverse=True)
-    print(len(con))
-    result = img.copy()
-    cv2.drawContours(result, [con[0]], -1, (0, 0, 255), 5)
-    cv2.imshow('result', result)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+for filename in images:
+    img = cv2.imread(filename)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    ret, corners = cv2.findChessboardCorners(gray, CHESSBOARD, None)
+    if ret:
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_COUNT, 30, 0.001)
+        result = cv2.cornerSubPix(gray, corners, (5,5), (-1, -1), criteria)
+        points_3D.append(objp)
+        points_2D.append(result)
+
+# --- ПЕРВАЯ КАЛИБРОВКА ---
+ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
+    objectPoints=points_3D, imagePoints=points_2D, imageSize=gray.shape[::-1], cameraMatrix=None, distCoeffs=None
+)
+
+print(f"Старая ошибка репроекции (RMS): {ret:.4f} пикселей")
+
+# --- СТРОГАЯ ФИЛЬТРАЦИЯ КАДРОВ ---
+good_points_2D = []
+good_points_3D = []
+
+for i in range(len(points_3D)):
+    # Важно: проецируем точки, используя rvecs и tvecs именно этой итерации
+    imgpoints2, _ = cv2.projectPoints(points_3D[i], rvecs[i], tvecs[i], mtx, dist)
+    
+    # Считаем среднее отклонение (ошибку) для текущего кадра
+    error = cv2.norm(points_2D[i], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
+    
+    # Отбираем только самые стабильные кадры (поставим жесткий порог 0.8)
+    if error < 0.8:
+        good_points_3D.append(points_3D[i])
+        good_points_2D.append(points_2D[i])
+    else:
+        print(f"Удален кривой кадр №{i} (ошибка на кадре: {error:.2f} px)")
+
+# --- ВТОРАЯ КАЛИБРОВКА (ТОЛЬКО НА ХОРОШИХ КАДРАХ) ---
+if len(good_points_2D) > 10:  # Калибровать имеет смысл, если осталось хотя бы 10 кадров
+    ret_new, mtx_new, dist_new, rvecs_new, tvecs_new = cv2.calibrateCamera(
+        objectPoints=good_points_3D, imagePoints=good_points_2D, imageSize=gray.shape[::-1], cameraMatrix=None, distCoeffs=None
+    )
+    print(f"\n--- НОВЫЕ РЕЗУЛЬТАТЫ (Осталось кадров: {len(good_points_2D)}) ---")
+    print(f"Новая ошибка репроекции (RMS): {ret_new:.4f} пикселей")
+else:
+    print("\nСлишком много кривых кадров, фильтр удалил почти всё. Нужно переснимать плоскую доску.")
